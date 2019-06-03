@@ -32,6 +32,7 @@ LOGIN_TYPE_XBL = "xbl"
 HOOK_SETTINGS = [
     "MICROSOFT_AUTH_AUTHENTICATE_HOOK",
     "MICROSOFT_AUTH_CALLBACK_HOOK",
+    "MICROSOFT_AUTH_GETORCREATE_USER_HOOK",
 ]
 CACHE_TIMEOUT = 86400
 CACHE_KEY_OPENID = "microsoft_auth_openid_config"
@@ -162,6 +163,24 @@ DEFAULT_CONFIG = {
             ),
             str,
         ),
+        "MICROSOFT_AUTH_GETORCREATE_USER_HOOK": (
+            "",
+            _(
+                """Callable hook to retrieve the corresponding user or
+                create a new one.
+
+                When you want to customize the correspondance between
+                The Microsoft object and the Django User object.
+                Usefull if you want make the correspondance with a field
+                provided in a profile extension for example.
+
+                The parameters that will be passed will be `(dict: data)`.
+
+                The expected return value is a User object.
+                """
+            ),
+            str,
+        ),
     },
     "fieldsets": {
         "Microsoft Login": (
@@ -177,6 +196,7 @@ DEFAULT_CONFIG = {
             "MICROSOFT_AUTH_AUTO_REPLACE_ACCOUNTS",
             "MICROSOFT_AUTH_AUTHENTICATE_HOOK",
             "MICROSOFT_AUTH_CALLBACK_HOOK",
+            "MICROSOFT_AUTH_GETORCREATE_USER_HOOK",
         )
     },
     "fields": {

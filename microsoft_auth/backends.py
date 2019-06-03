@@ -152,6 +152,33 @@ class MicrosoftAuthenticationBackend(ModelBackend):
         user = microsoft_user.user
 
         if user is None:
+            user = self._getorcreate_user(data)
+
+            existing_account = self._get_existing_microsoft_account(user)
+            if existing_account is not None:
+                if self.config.MICROSOFT_AUTH_AUTO_REPLACE_ACCOUNTS:
+                    existing_account.user = None
+                    existing_account.save()
+                else:
+                    logger.warning(
+                        (
+                            "User {} already has linked Microsoft "
+                            "account and MICROSOFT_AUTH_AUTO_REPLACE_ACCOUNTS "
+                            "is False"
+                        ).format(user.email)
+                    )
+                    return None
+
+            microsoft_user.user = user
+            microsoft_user.save()
+
+        return user
+
+    def _getorcreate_user(self, data):
+        function = get_hook("MICROSOFT_AUTH_GETORCREATE_USER_HOOK")
+        if function is not None:
+            user = function(data)
+        else: # This is the default behavior, use email as key jointure
             fullname = data.get("name")
             first_name, last_name = "", ""
             if fullname is not None:
@@ -173,25 +200,6 @@ class MicrosoftAuthenticationBackend(ModelBackend):
                     email=data["email"],
                 )
                 user.save()
-
-            existing_account = self._get_existing_microsoft_account(user)
-            if existing_account is not None:
-                if self.config.MICROSOFT_AUTH_AUTO_REPLACE_ACCOUNTS:
-                    existing_account.user = None
-                    existing_account.save()
-                else:
-                    logger.warning(
-                        (
-                            "User {} already has linked Microsoft "
-                            "account and MICROSOFT_AUTH_AUTO_REPLACE_ACCOUNTS "
-                            "is False"
-                        ).format(user.email)
-                    )
-                    return None
-
-            microsoft_user.user = user
-            microsoft_user.save()
-
         return user
 
     def _get_existing_microsoft_account(self, user):
